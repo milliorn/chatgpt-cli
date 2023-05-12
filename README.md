@@ -1,5 +1,8 @@
 # chatgpt-cli
 
+[![CodeQL](https://github.com/milliorn/chatgpt-cli/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/milliorn/chatgpt-cli/actions/workflows/github-code-scanning/codeql)
+[![Dependency Review](https://github.com/milliorn/chatgpt-cli/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/milliorn/chatgpt-cli/actions/workflows/dependency-review.yml)
+
 A command-line interface (CLI) tool that utilizes OpenAI's GPT-3 language model for interactive chatbot conversations.
 With this tool, you can quickly generate natural language responses to prompts from your terminal using the powerful GPT-3 API.
 
