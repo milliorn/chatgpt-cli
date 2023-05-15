@@ -22,6 +22,5 @@
         "patch"
       ]
     }
-  ],
-  "onError": "close"
+  ]
 }
