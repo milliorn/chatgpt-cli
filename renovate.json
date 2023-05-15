@@ -23,6 +23,5 @@
       ]
     }
   ],
-  "onError": "close",
-  "onErrorMaxAttempts": 2
+  "onError": "close"
 }
