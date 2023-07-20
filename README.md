@@ -3,12 +3,21 @@
 [![CodeQL](https://github.com/milliorn/chatgpt-cli/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/milliorn/chatgpt-cli/actions/workflows/github-code-scanning/codeql)
 [![Dependency Review](https://github.com/milliorn/chatgpt-cli/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/milliorn/chatgpt-cli/actions/workflows/dependency-review.yml)
 
-A command-line interface (CLI) tool that utilizes OpenAI's GPT-3 language model for interactive chatbot conversations.
-With this tool, you can quickly generate natural language responses to prompts from your terminal using the powerful GPT-3 API.
+ChatGPT CLI is a command-line interface (CLI) tool that allows you to have interactive conversations with OpenAI's GPT-3 powered chatbot, known as ChatGPT. With this CLI tool, you can have natural language conversations with the chatbot and receive text-based responses.
+
+The application is built using Python and leverages OpenAI's GPT-3 API to enable seamless communication with the chatbot. It provides a simple and efficient way to interact with the language model, making it suitable for testing, prototyping, and exploring various use cases.
+
+## Features
+
+- Interactive Chat: Engage in real-time, back-and-forth conversations with ChatGPT.
+- Easy-to-Use: Simple and intuitive command-line interface for smooth interactions.
+- Customizable Prompts: Tailor your conversation starters and prompts as per your requirements.
 
 ## Usage
 
-To start a conversation with the GPT-3 chatbot, simply type the following command in your terminal in project root:
+1. Clone the repository: `git clone https://github.com/milliorn/chatgpt-cli.git`
+2. Install the required dependencies: `npm install`
+3. To start a conversation with the GPT-3 chatbot, simply type the following command in your terminal in project root:
 
 `npm start`
 
@@ -27,3 +36,16 @@ Then, you need to create an `.env` file in project root, an add your organizatio
 `API_KEY=yourkey`
 
 `ORGANIZATION=org`
+
+## License
+
+This project is licensed under the ISC License. See the [LICENSE](LICENSE) file for more details.
+
+## Acknowledgements
+
+This project was built using the [dotenv](https://www.npmjs.com/package/dotenv) and [openai](https://www.npmjs.com/package/openai) NPM packages. Special thanks to the contributors of these packages for making this project possible.
+
+Feel free to contribute to the project by opening issues or submitting pull requests.
+
+Happy chatting with ChatGPT! 🚀
+
