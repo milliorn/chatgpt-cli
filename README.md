@@ -1,7 +1,6 @@
 # chatgpt-cli
 
 [![CodeQL](https://github.com/milliorn/chatgpt-cli/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/milliorn/chatgpt-cli/actions/workflows/github-code-scanning/codeql)
-[![Dependency Review](https://github.com/milliorn/chatgpt-cli/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/milliorn/chatgpt-cli/actions/workflows/dependency-review.yml)
 
 ChatGPT CLI is a command-line interface (CLI) tool that allows you to have interactive conversations with OpenAI's GPT-3 powered chatbot, known as ChatGPT. With this CLI tool, you can have natural language conversations with the chatbot and receive text-based responses.
 
