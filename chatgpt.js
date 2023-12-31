@@ -1,6 +1,6 @@
-import { Configuration, OpenAIApi } from "openai";
-import readline from "readline";
 import * as dotenv from "dotenv";
+import OpenAI from "openai";
+import readline from "readline";
 
 dotenv.config(); // load environment variables from .env file
 // console.log(process.env); // remove this after you've confirmed it is working
@@ -8,13 +8,12 @@ dotenv.config(); // load environment variables from .env file
 // OpenAI configuration
 // https://platform.openai.com/account/org-settings
 // https://platform.openai.com/account/api-keys
-const configuration = new Configuration({
+
+// create new instance of OpenAI API using the configuration
+const openai = new OpenAI({
   organization: process.env.ORGANIZATION, // set the organization using environment variable
   apiKey: process.env.API_KEY, // set the API key using environment variable
 });
-
-// create new instance of OpenAI API using the configuration
-const openai = new OpenAIApi(configuration);
 
 // creates a UI in the terminal that allows users to type in their questions.
 const userInterface = readline.createInterface({
@@ -30,15 +29,21 @@ userInterface.prompt();
 // when the response is displayed, the user is prompted for another message
 userInterface.on("line", async (input) => {
   await openai
-    .createChatCompletion({
+    .chat.completions.create({
       model: "gpt-3.5-turbo", // set the model to use for the API
-      messages: [{ role: "user", content: input }], // set the user's message as input for the API
+      messages: [ { role: "user", content: input } ], // set the user's message as input for the API
     })
     .then((res) => {
-      console.log(res.data.choices[0].message.content); // display the response from the API
+      // Accessing the first choice's message content
+      if (res.choices && res.choices.length > 0 && res.choices[ 0 ].message) {
+        console.log("ChatGPT:", res.choices[ 0 ].message.content);
+      } else {
+        console.log("No response content found.");
+      }
+
       userInterface.prompt(); // prompt the user for another message
     })
     .catch((e) => {
-      console.error(e); // if there's an error, display it in the console
+      console.error("Error:", e); // if there's an error, display it in the console
     });
 });
