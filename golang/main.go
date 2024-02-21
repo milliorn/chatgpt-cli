@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 // Message struct for OpenAI GPT-3
@@ -29,6 +33,16 @@ type OpenAIResponse struct {
 }
 
 func main() {
-	fmt.Println("OpenAI GPT-3 Example")
+	// fmt.Println("OpenAI GPT-3 Example")
+	err := godotenv.Load()
 
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	apiKey := os.Getenv("OPENAI_API_KEY")
+	organization := os.Getenv("OPENAI_ORGANIZATION")
+
+	fmt.Println("API Key:", apiKey)
+	fmt.Println("Organization:", organization)
 }
