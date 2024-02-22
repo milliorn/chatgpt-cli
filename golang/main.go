@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	// "os"
-	// "github.com/joho/godotenv"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 // Request struct for the OpenAI Chat Completions API
@@ -32,13 +33,14 @@ func main() {
 	fmt.Println("OpenAI GPT-3 Chatbot in Go!")
 
 	// Load environment variables
-	// err := godotenv.Load()
-	// if err != nil {
-	// 	log.Fatal("Error loading .env file")
-	// }
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	// Load API key from environment variable
-	apiKey := "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"
+	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
 		log.Fatal("OPENAI_API_KEY environment variable is not set.")
 	}
