@@ -41,6 +41,7 @@ func main() {
 
 	// Load API key from environment variable
 	apiKey := os.Getenv("OPENAI_API_KEY")
+	
 	if apiKey == "" {
 		log.Fatal("OPENAI_API_KEY environment variable is not set.")
 	}
