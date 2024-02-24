@@ -14,9 +14,8 @@ The application is built using Python and leverages OpenAI's GPT-3 API to enable
 
 ## Usage
 
-1. Clone the repository: `git clone https://github.com/milliorn/chatgpt-cli.git`
-2. Install the required dependencies: `npm install`
-3. To start a conversation with the GPT-3 chatbot, simply type the following command in your terminal in project root:
+1. Install the required dependencies: `npm install`
+2. To start a conversation with the GPT-3 chatbot, simply type the following command in your terminal in project root:
 
 `npm start`
 
@@ -35,10 +34,6 @@ Then, you need to create an `.env` file in project root, an add your organizatio
 `API_KEY=yourkey`
 
 `ORGANIZATION=org`
-
-## License
-
-This project is licensed under the ISC License. See the [LICENSE](LICENSE) file for more details.
 
 ## Acknowledgements
 
