@@ -92,7 +92,7 @@ func main() {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", "Bearer "+apiKey)
 
-		fmt.Println("\nRequest Headers:", req.Header)
+		// fmt.Println("\nRequest Headers:", req.Header)
 
 		// Send the HTTP request
 		client := &http.Client{}
@@ -101,7 +101,7 @@ func main() {
 
 		handleHTTPResponseSendingError(err, resp)
 
-		fmt.Println("\nResponse Status:", resp.Status)
+		// fmt.Println("\nResponse Status:", resp.Status)
 
 		// Decode the response body
 		var responseBody Response
