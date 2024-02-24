@@ -131,9 +131,10 @@ func handleEnvLoadError(err error) {
 func checkAPIKey(apiKey string) {
 	if apiKey == "" {
 		log.Fatal("OPENAI_API_KEY environment variable is not set.")
-	} else {
-		fmt.Println("\nAPI Key:", apiKey)
 	}
+	// else {
+	// 	fmt.Println("\nAPI Key:", apiKey)
+	// }
 }
 
 // checkInputError checks if there is an error while reading input.
@@ -163,9 +164,10 @@ func createRequestPayload(prompt string) Request {
 func handleRequestBody(err error, reqBody []byte) {
 	if err != nil {
 		log.Fatalf("\nError marshaling request payload: %v \n", err)
-	} else {
-		fmt.Println("\nRequest Body:", string(reqBody))
 	}
+	// else {
+	// 	fmt.Println("\nRequest Body:", string(reqBody))
+	// }
 }
 
 // handleHTTPRequestCreationError handles the error when creating an HTTP request.
@@ -173,9 +175,10 @@ func handleRequestBody(err error, reqBody []byte) {
 func handleHTTPRequestCreationError(err error, req *http.Request) {
 	if err != nil {
 		log.Fatalf("\nError creating HTTP request: %v \n", err)
-	} else {
-		fmt.Println("\nHTTP Request:", req)
 	}
+	// else {
+	// 	fmt.Println("\nHTTP Request:", req)
+	// }
 }
 
 // handleHTTPResponseSendingError handles the error when sending an HTTP request.
@@ -183,9 +186,10 @@ func handleHTTPRequestCreationError(err error, req *http.Request) {
 func handleHTTPResponseSendingError(err error, resp *http.Response) {
 	if err != nil {
 		log.Fatalf("\nError sending HTTP request: %v \n", err)
-	} else {
-		fmt.Println("\nHTTP Response:", resp)
 	}
+	// else {
+	// 	fmt.Println("\nHTTP Response:", resp)
+	// }
 }
 
 // handleResponseBodyDecodingError handles the error when decoding the response body.
@@ -193,9 +197,10 @@ func handleHTTPResponseSendingError(err error, resp *http.Response) {
 func handleResponseBodyDecodingError(err error, responseBody Response) {
 	if err != nil {
 		log.Fatalf("\nError decoding response body: %v", err)
-	} else {
-		fmt.Println("\nResponse Body:", responseBody)
 	}
+	// else {
+	// 	fmt.Println("\nResponse Body:", responseBody)
+	// }
 }
 
 // printResponseChoice prints the content of the first response choice if available.
