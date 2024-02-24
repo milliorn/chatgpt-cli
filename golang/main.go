@@ -1,21 +1,22 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 // Request struct for the OpenAI Chat Completions API
 type Request struct {
-	Model          string     `json:"model"`
-	ResponseFormat FormatType `json:"response_format"`
-	Messages       []Message  `json:"messages"`
+	Model    string    `json:"model"`
+	Messages []Message `json:"messages"`
 }
 
 // Message struct for the OpenAI Chat Completions API
@@ -24,9 +25,19 @@ type Message struct {
 	Content string `json:"content"`
 }
 
-// FormatType struct for the OpenAI Chat Completions API
-type FormatType struct {
-	Type string `json:"type"`
+// Response struct for the HTTP response
+type Response struct {
+	Choices []Choice `json:"choices"`
+}
+
+// Choice struct for the response choices
+type Choice struct {
+	Message Content `json:"message"`
+}
+
+// Content struct for the message content
+type Content struct {
+	Content string `json:"content"`
 }
 
 func main() {
@@ -41,99 +52,100 @@ func main() {
 
 	// Load API key from environment variable
 	apiKey := os.Getenv("OPENAI_API_KEY")
-	
+
 	if apiKey == "" {
 		log.Fatal("OPENAI_API_KEY environment variable is not set.")
+	} else {
+		fmt.Println("\nAPI Key:", apiKey)
 	}
 
-	fmt.Println("API Key:", apiKey)
+	// Infinite loop to continuously prompt the user for input
+	for {
+		// Prompt the user for input
+		fmt.Print("\nEnter your prompt (or 'exit' to quit): ")
 
-	// Define the request payload
-	reqPayload := Request{
-		Model: "gpt-3.5-turbo",
-		ResponseFormat: FormatType{
-			Type: "json_object",
-		},
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: "Hello, how are you?",
+		reader := bufio.NewReader(os.Stdin)
+		prompt, err := reader.ReadString('\n')
+		if err != nil {
+			log.Fatalf("Error reading input: %v", err)
+		}
+
+		prompt = strings.TrimSpace(prompt)
+
+		if strings.ToLower(prompt) == "exit" {
+			fmt.Println("\nGoodbye!")
+			break
+		} else if prompt == "" {
+			fmt.Println("\nPlease enter a prompt.")
+			continue
+		} else {
+			fmt.Println("\nUser Prompt:", prompt)
+		}
+
+		// Define the request payload
+		reqPayload := Request{
+			Model: "gpt-3.5-turbo",
+			Messages: []Message{
+				{
+					Role:    "user",
+					Content: prompt,
+				},
 			},
-			{
-				Role:    "system",
-				Content: "This is a message containing the word 'json'.",
-			},
-		},
+		}
+
+		// Marshal the request payload into JSON
+		reqBody, err := json.Marshal(reqPayload)
+
+		if err != nil {
+			log.Fatalf("\nError marshaling request payload: %v \n", err)
+		} else {
+			fmt.Println("\nRequest Body:", string(reqBody))
+		}
+
+		// Create the HTTP request
+		req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
+		if err != nil {
+			log.Fatalf("\nError creating HTTP request: %v \n", err)
+		} else {
+			fmt.Println("\nHTTP Request:", req)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+
+		fmt.Println("\nRequest Headers:", req.Header)
+
+		// Send the HTTP request
+		client := &http.Client{}
+
+		resp, err := client.Do(req)
+
+		if err != nil {
+			log.Fatalf("\nError sending HTTP request: %v \n", err)
+		} else {
+			fmt.Println("\nHTTP Response:", resp)
+		}
+
+		fmt.Println("\nResponse Status:", resp.Status)
+
+		// Decode the response body
+		var responseBody Response
+
+		err = json.NewDecoder(resp.Body).Decode(&responseBody)
+
+		if err != nil {
+			log.Fatalf("\nError decoding response body: %v", err)
+		} else {
+			fmt.Println("\nResponse Body:", responseBody)
+		}
+
+		// Print the content of the first choice
+		if len(responseBody.Choices) > 0 {
+			fmt.Println("\nChatGPT:", responseBody.Choices[0].Message.Content)
+		} else {
+			fmt.Println("\nNo response choice received.")
+		}
+
+		resp.Body.Close()
 	}
-
-	fmt.Println("Request Payload:", reqPayload)
-
-	// Marshal the request payload into JSON
-	reqBody, err := json.Marshal(reqPayload)
-
-	if err != nil {
-		log.Fatalf("Error marshaling request payload: %v \n", err)
-	} else {
-		// Print the request body
-		fmt.Println("Request Body:", reqBody)
-	}
-
-	// Create the HTTP request
-	req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-
-	if err != nil {
-		log.Fatalf("Error creating HTTP request: %v + \n", err)
-	} else {
-		// Print the HTTP request
-		fmt.Println("Request:", req)
-	}
-
-	// Set request headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-
-	fmt.Println("Request Headers:", req.Header)
-
-	// Send the HTTP request
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		log.Fatalf("Error sending HTTP request: %v \n", err)
-	} else {
-		// Print the HTTP response
-		fmt.Println("Response:", resp)
-	}
-
-	defer resp.Body.Close()
-
-	// Read the response body
-	var result map[string]interface{}
-	err = json.NewDecoder(resp.Body).Decode(&result)
-
-	if err != nil {
-		log.Fatalf("Error decoding response body: %v", err)
-	} else {
-		// Print the response body
-		fmt.Println("Response Body:", result)
-	}
-
-	// Check if the "choices" field exists and contains elements
-	choices, ok := result["choices"].([]interface{})
-
-	if !ok || len(choices) == 0 {
-		log.Fatal("No response received from OpenAI.")
-	} else {
-		// Print the response choices
-		fmt.Println("Response Choices:", choices)
-	}
-
-	// Extract and print the response content
-	content, ok := choices[0].(map[string]interface{})["message"].(map[string]interface{})["content"].(string)
-
-	if !ok {
-		log.Fatal("Error parsing response content")
-	}
-	fmt.Println("Response:", content)
 }
