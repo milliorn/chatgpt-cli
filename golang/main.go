@@ -15,29 +15,29 @@ import (
 
 // Request struct for the OpenAI Chat Completions API
 type Request struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
+	Model    string    `json:"model,omitempty"`
+	Messages []Message `json:"messages,omitempty"`
 }
 
 // Message struct for the OpenAI Chat Completions API
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role    string `json:"role,omitempty"`
+	Content string `json:"content,omitempty"`
 }
 
 // Response struct for the HTTP response
 type Response struct {
-	Choices []Choice `json:"choices"`
+	Choices []Choice `json:"choices,omitempty"`
 }
 
 // Choice struct for the response choices
 type Choice struct {
-	Message Content `json:"message"`
+	Message Content `json:"message,omitempty"`
 }
 
 // Content struct for the message content
 type Content struct {
-	Content string `json:"content"`
+	Content string `json:"content,omitempty"`
 }
 
 func main() {
