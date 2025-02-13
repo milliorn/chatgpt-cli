@@ -161,7 +161,7 @@ func createRequestPayload(prompt string) Request {
 
 // handleRequestBody handles the request body based on the error status.
 // If there's an error, it logs a fatal error message; otherwise, it prints the request body.
-func handleRequestBody(err error, reqBody []byte) {
+func handleRequestBody(err error, _ []byte) {
 	if err != nil {
 		log.Fatalf("\nError marshaling request payload: %v \n", err)
 	}
@@ -172,7 +172,7 @@ func handleRequestBody(err error, reqBody []byte) {
 
 // handleHTTPRequestCreationError handles the error when creating an HTTP request.
 // If there's an error, it logs a fatal error message; otherwise, it prints the HTTP request.
-func handleHTTPRequestCreationError(err error, req *http.Request) {
+func handleHTTPRequestCreationError(err error, _ *http.Request) {
 	if err != nil {
 		log.Fatalf("\nError creating HTTP request: %v \n", err)
 	}
@@ -183,7 +183,7 @@ func handleHTTPRequestCreationError(err error, req *http.Request) {
 
 // handleHTTPResponseSendingError handles the error when sending an HTTP request.
 // If there's an error, it logs a fatal error message; otherwise, it prints the HTTP response.
-func handleHTTPResponseSendingError(err error, resp *http.Response) {
+func handleHTTPResponseSendingError(err error, _ *http.Response) {
 	if err != nil {
 		log.Fatalf("\nError sending HTTP request: %v \n", err)
 	}
@@ -194,7 +194,7 @@ func handleHTTPResponseSendingError(err error, resp *http.Response) {
 
 // handleResponseBodyDecodingError handles the error when decoding the response body.
 // If there's an error, it logs a fatal error message; otherwise, it prints the response body.
-func handleResponseBodyDecodingError(err error, responseBody Response) {
+func handleResponseBodyDecodingError(err error, _ Response) {
 	if err != nil {
 		log.Fatalf("\nError decoding response body: %v", err)
 	}
