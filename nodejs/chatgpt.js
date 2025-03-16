@@ -9,41 +9,86 @@ dotenv.config(); // load environment variables from .env file
 // https://platform.openai.com/account/org-settings
 // https://platform.openai.com/account/api-keys
 
-// create new instance of OpenAI API using the configuration
+// Check if environment variables are set
+if (!process.env.OPENAI_API_KEY) {
+  console.error("Error: Missing required environment variables (OPENAI_API_KEY). Please check your .env file.");
+  process.exit(1); // Exit the program if environment variables are missing
+}
+
+if (!process.env.OPENAI_ORGANIZATION) {
+  console.error("Error: Missing required environment variables (OPENAI_ORGANIZATION). Please check your .env file.");
+  process.exit(1); // Exit the program if environment variables are missing
+}
+
+// Create new instance of OpenAI API using the configuration
 const openai = new OpenAI({
-  organization: process.env.ORGANIZATION, // set the organization using environment variable
-  apiKey: process.env.API_KEY, // set the API key using environment variable
+  organization: process.env.OPENAI_ORGANIZATION, // set the organization using environment variable
+  apiKey: process.env.OPENAI_API_KEY, // set the API key using environment variable
 });
 
-// creates a UI in the terminal that allows users to type in their questions.
+// Create a UI in the terminal that allows users to type in their questions
 const userInterface = readline.createInterface({
   input: process.stdin, // set the input to the standard input
   output: process.stdout, // set the output to the standard output
 });
 
-// prompt the user to enter a message
-userInterface.prompt();
+// Configurable retry parameters
+const maxRetries = 3;
+const initialDelay = 2000; // Initial delay in milliseconds (2 seconds)
 
-// when the user gives a prompt and hits Enter, 
-// it triggers a callback which takes the input and uses it as content for the OpenAI API
-// when the response is displayed, the user is prompted for another message
-userInterface.on("line", async (input) => {
-  await openai
-    .chat.completions.create({
+// Function to handle retries with exponential backoff
+async function handleRequest(input, retries = 0) {
+  try {
+    const res = await openai.chat.completions.create({
       model: "gpt-3.5-turbo", // set the model to use for the API
-      messages: [ { role: "user", content: input } ], // set the user's message as input for the API
-    })
-    .then((res) => {
-      // Accessing the first choice's message content
-      if (res.choices && res.choices.length > 0 && res.choices[ 0 ].message) {
-        console.log("ChatGPT:", res.choices[ 0 ].message.content);
-      } else {
-        console.log("No response content found.");
-      }
-
-      userInterface.prompt(); // prompt the user for another message
-    })
-    .catch((e) => {
-      console.error("Error:", e); // if there's an error, display it in the console
+      messages: [{ role: "user", content: input }], // set the user's message as input for the API
     });
-});
+
+    if (res.choices && res.choices.length > 0 && res.choices[0].message) {
+      console.log("ChatGPT:", res.choices[0].message.content);
+    } else {
+      console.log("No response content found.");
+    }
+  } catch (e) {
+    // Log the error for monitoring
+    console.error(`Error on attempt ${retries + 1}:`, e);
+
+    // Check for rate-limiting error (HTTP 429)
+    if (e.response && e.response.status === 429) {
+      const retryAfter = e.response.headers['retry-after'] || (Math.pow(2, retries) * initialDelay / 1000); // Retry after header or fallback to exponential backoff
+      console.log(`Rate-limited. Retrying in ${retryAfter} seconds...`);
+      setTimeout(() => handleRequest(input, retries + 1), retryAfter * 1000); // Retry after the suggested delay
+    } else if (retries < maxRetries) {
+      const delay = initialDelay * Math.pow(2, retries); // Exponential backoff
+      console.log(`Error occurred. Retrying in ${delay / 1000} seconds...`);
+      setTimeout(() => handleRequest(input, retries + 1), delay); // Retry after delay
+    } else {
+      console.error("Error: Maximum retry attempts reached. Please try again later.");
+    }
+  }
+}
+
+// Prompt user to enter a message
+function askQuestion() {
+  userInterface.question('Please enter a prompt (type "exit" to quit): ', (input) => {
+    if (input.toLowerCase() === 'exit') {
+      console.log('Goodbye!');
+      userInterface.close(); // Close the interface and stop further prompts
+      return;
+    }
+
+    if (!input.trim()) {  // Check for empty input
+      console.log("Input cannot be empty. Please enter a valid prompt.");
+      askQuestion(); // prompt again if input is empty
+      return;
+    }
+
+    handleRequest(input) // Call function with retry mechanism
+
+      // Only after the request is handled and output is displayed, ask for another prompt
+      .then(() => askQuestion()); // Ask for the next prompt after the current one is processed
+  });
+}
+
+// Initial prompt
+askQuestion();
