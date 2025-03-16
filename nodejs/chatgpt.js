@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import readline from "readline";
 
 dotenv.config(); // load environment variables from .env file
-console.log(process.env); // remove this after you've confirmed it is working
+// console.log(process.env); // remove this after you've confirmed it is working
 
 // OpenAI configuration
 // https://platform.openai.com/account/org-settings
