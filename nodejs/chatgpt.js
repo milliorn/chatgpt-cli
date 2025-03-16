@@ -53,7 +53,12 @@ async function handleRequest(input, retries = 0) {
     // Log the error for monitoring
     console.error(`Error on attempt ${retries + 1}:`, e);
 
-    if (retries < maxRetries) {
+    // Check for rate-limiting error (HTTP 429)
+    if (e.response && e.response.status === 429) {
+      const retryAfter = e.response.headers['retry-after'] || (Math.pow(2, retries) * initialDelay / 1000); // Retry after header or fallback to exponential backoff
+      console.log(`Rate-limited. Retrying in ${retryAfter} seconds...`);
+      setTimeout(() => handleRequest(input, retries + 1), retryAfter * 1000); // Retry after the suggested delay
+    } else if (retries < maxRetries) {
       const delay = initialDelay * Math.pow(2, retries); // Exponential backoff
       console.log(`Error occurred. Retrying in ${delay / 1000} seconds...`);
       setTimeout(() => handleRequest(input, retries + 1), delay); // Retry after delay
