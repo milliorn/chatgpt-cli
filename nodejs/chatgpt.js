@@ -41,6 +41,12 @@ function askQuestion() {
       return;
     }
 
+    if (!input.trim()) {  // Check for empty input
+      console.log("Input cannot be empty. Please enter a valid prompt.");
+      askQuestion(); // prompt again if input is empty
+      return;
+    }
+
     try {
       const res = await openai.chat.completions.create({
         model: "gpt-3.5-turbo", // set the model to use for the API
