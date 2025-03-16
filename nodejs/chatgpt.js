@@ -10,7 +10,7 @@ dotenv.config(); // load environment variables from .env file
 // https://platform.openai.com/account/api-keys
 
 // Check if environment variables are set
-if (!process.env.OPENAI_API_KEY || !process.env.OPENAI_ORGANIZATION) {
+if (!process.env.OPENAI_API_KEY) {
   console.error("Error: Missing required environment variables (API_KEY). Please check your .env file.");
   process.exit(1); // Exit the program if environment variables are missing
 }
