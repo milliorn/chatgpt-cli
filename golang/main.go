@@ -23,6 +23,7 @@ func main() {
 
 	// Retrieve the OPENAI_API_KEY from the environment.
 	apiKey := os.Getenv("OPENAI_API_KEY")
+
 	if apiKey == "" {
 		log.Fatal("OPENAI_API_KEY is not set.")
 	}
@@ -34,7 +35,9 @@ func main() {
 	// Prompt for user input until they type "exit".
 	for {
 		fmt.Print("\nEnter your prompt (or 'exit' to quit): ")
+		
 		prompt, err := reader.ReadString('\n')
+
 		if err != nil {
 			// More descriptive error message for failed input reading.
 			log.Fatal("Could not read your prompt. Please verify console input. Error details:", err)
