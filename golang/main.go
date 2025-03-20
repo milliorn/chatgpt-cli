@@ -3,212 +3,141 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
-// Request struct for the OpenAI Chat Completions API
-type Request struct {
-	Model    string    `json:"model,omitempty"`
-	Messages []Message `json:"messages,omitempty"`
-}
-
-// Message struct for the OpenAI Chat Completions API
-type Message struct {
-	Role    string `json:"role,omitempty"`
-	Content string `json:"content,omitempty"`
-}
-
-// Response struct for the HTTP response
-type Response struct {
-	Choices []Choice `json:"choices,omitempty"`
-}
-
-// Choice struct for the response choices
-type Choice struct {
-	Message Content `json:"message,omitempty"`
-}
-
-// Content struct for the message content
-type Content struct {
-	Content string `json:"content,omitempty"`
-}
-
 func main() {
-	fmt.Println("OpenAI GPT-3 Chatbot in Go!")
+	// Load environment variables from .env. If we can't, it's a fatal error.
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Could not load .env file:", err)
+	}
 
-	// Load environment variables
-	err := godotenv.Load()
-
-	handleEnvLoadError(err)
-
-	// Load API key from environment variable
+	// Retrieve the OPENAI_API_KEY from the environment.
 	apiKey := os.Getenv("OPENAI_API_KEY")
 
-	checkAPIKey(apiKey)
+	if apiKey == "" {
+		log.Fatal("OPENAI_API_KEY is not set.")
+	}
 
-	// Infinite loop to continuously prompt the user for input
+	// Prepare an HTTP client and a reader for console input.
+	client := &http.Client{}
+	reader := bufio.NewReader(os.Stdin)
+
+	// Prompt for user input until they type "exit".
 	for {
-		// Prompt the user for input
 		fmt.Print("\nEnter your prompt (or 'exit' to quit): ")
-
-		reader := bufio.NewReader(os.Stdin)
 
 		prompt, err := reader.ReadString('\n')
 
-		checkInputError(err)
+		if err != nil {
+			// More descriptive error message for failed input reading.
+			log.Fatal("Could not read your prompt. Please verify console input. Error details:", err)
+		}
 
 		prompt = strings.TrimSpace(prompt)
 
+		// If "exit", terminate the loop.
 		if strings.ToLower(prompt) == "exit" {
 			fmt.Println("\nGoodbye!")
 			break
-		} else if prompt == "" {
-			fmt.Println("\nPlease enter a prompt.")
+		}
+		// If the prompt is empty, prompt again.
+		if prompt == "" {
+			fmt.Println("Please enter a prompt.")
 			continue
-		} else {
-			fmt.Println("\nUser Prompt:", prompt)
 		}
 
-		// Define the request payload
-		reqPayload := createRequestPayload(prompt)
-
-		// Marshal the request payload into JSON
-		reqBody, err := json.Marshal(reqPayload)
-
-		handleRequestBody(err, reqBody)
-
-		// Create the HTTP request
-		req, err := http.NewRequest("POST", "https://api.openai.com/v1/chat/completions", bytes.NewBuffer(reqBody))
-
-		handleHTTPRequestCreationError(err, req)
-
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Authorization", "Bearer "+apiKey)
-
-		// fmt.Println("\nRequest Headers:", req.Header)
-
-		// Send the HTTP request
-		client := &http.Client{}
-
-		resp, err := client.Do(req)
-
-		handleHTTPResponseSendingError(err, resp)
-
-		// fmt.Println("\nResponse Status:", resp.Status)
-
-		// Decode the response body
-		var responseBody Response
-
-		err = json.NewDecoder(resp.Body).Decode(&responseBody)
-
-		handleResponseBodyDecodingError(err, responseBody)
-
-		// Print the content of the first choice
-		printResponseChoice(responseBody)
-
-		resp.Body.Close()
-	}
-}
-
-// handleEnvLoadError is a function that handles errors when loading the .env file.
-// It takes an error as a parameter and logs a fatal error message if the error is not nil.
-func handleEnvLoadError(err error) {
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-}
-
-// checkAPIKey checks if the OpenAI API key is set.
-// If the API key is empty, it logs a fatal error message.
-// Otherwise, it prints the API key.
-func checkAPIKey(apiKey string) {
-	if apiKey == "" {
-		log.Fatal("OPENAI_API_KEY environment variable is not set.")
-	}
-	// else {
-	// 	fmt.Println("\nAPI Key:", apiKey)
-	// }
-}
-
-// checkInputError checks if there is an error while reading input.
-// If there is an error, it logs a fatal error message.
-func checkInputError(err error) {
-	if err != nil {
-		log.Fatalf("Error reading input: %v", err)
-	}
-}
-
-// createRequestPayload creates a new Request payload with the provided prompt.
-func createRequestPayload(prompt string) Request {
-	reqPayload := Request{
-		Model: "gpt-3.5-turbo",
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: prompt,
+		// Build the request payload to send to OpenAI.
+		reqPayload := Request{
+			Model: "gpt-3.5-turbo",
+			Messages: []Message{
+				{Role: "user", Content: prompt},
 			},
-		},
+		}
+
+		// Send the request and handle errors.
+		responseBody, err := sendOpenAIRequest(client, apiKey, reqPayload)
+		if err != nil {
+			log.Println("Error from OpenAI request:", err)
+			continue
+		}
+
+		// Print the first choice if available.
+		if len(responseBody.Choices) > 0 {
+			fmt.Println("\nChatGPT:", responseBody.Choices[0].Message.Content)
+		} else {
+			fmt.Println("\nNo response choice received.")
+		}
 	}
-	return reqPayload
 }
 
-// handleRequestBody handles the request body based on the error status.
-// If there's an error, it logs a fatal error message; otherwise, it prints the request body.
-func handleRequestBody(err error, _ []byte) {
+/*
+sendOpenAIRequest:
+1. Marshals the Request to JSON.
+2. Creates a POST request (with 10s timeout).
+3. Checks for a 200 OK response.
+4. Decodes the JSON response into a Response struct.
+*/
+func sendOpenAIRequest(client *http.Client, apiKey string, payload Request) (*Response, error) {
+	// Convert the Request struct to JSON.
+	reqBody, err := json.Marshal(payload)
+
 	if err != nil {
-		log.Fatalf("\nError marshaling request payload: %v \n", err)
+		return nil, fmt.Errorf("could not marshal request: %w", err)
 	}
-	// else {
-	// 	fmt.Println("\nRequest Body:", string(reqBody))
-	// }
-}
 
-// handleHTTPRequestCreationError handles the error when creating an HTTP request.
-// If there's an error, it logs a fatal error message; otherwise, it prints the HTTP request.
-func handleHTTPRequestCreationError(err error, _ *http.Request) {
+	// Create a context with a 10s timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Build an HTTP POST request using the context.
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		"https://api.openai.com/v1/chat/completions",
+		bytes.NewBuffer(reqBody),
+	)
+
 	if err != nil {
-		log.Fatalf("\nError creating HTTP request: %v \n", err)
+		return nil, fmt.Errorf("could not create request: %w", err)
 	}
-	// else {
-	// 	fmt.Println("\nHTTP Request:", req)
-	// }
-}
 
-// handleHTTPResponseSendingError handles the error when sending an HTTP request.
-// If there's an error, it logs a fatal error message; otherwise, it prints the HTTP response.
-func handleHTTPResponseSendingError(err error, _ *http.Response) {
+	// Set required headers.
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	// Execute the request.
+	resp, err := client.Do(req)
+
 	if err != nil {
-		log.Fatalf("\nError sending HTTP request: %v \n", err)
+		return nil, fmt.Errorf("could not send request: %w", err)
 	}
-	// else {
-	// 	fmt.Println("\nHTTP Response:", resp)
-	// }
-}
 
-// handleResponseBodyDecodingError handles the error when decoding the response body.
-// If there's an error, it logs a fatal error message; otherwise, it prints the response body.
-func handleResponseBodyDecodingError(err error, _ Response) {
-	if err != nil {
-		log.Fatalf("\nError decoding response body: %v", err)
-	}
-	// else {
-	// 	fmt.Println("\nResponse Body:", responseBody)
-	// }
-}
+	defer resp.Body.Close()
 
-// printResponseChoice prints the content of the first response choice if available.
-// If no response choice is received, it prints a message indicating that.
-func printResponseChoice(responseBody Response) {
-	if len(responseBody.Choices) > 0 {
-		fmt.Println("\nChatGPT:", responseBody.Choices[0].Message.Content)
-	} else {
-		fmt.Println("\nNo response choice received.")
+	// Ensure the status code is OK.
+	if resp.StatusCode != http.StatusOK {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+
+		return nil, fmt.Errorf("non-OK status: %s\nBody: %s",
+			resp.Status, buf.String())
 	}
+
+	// Decode the response into a Response struct.
+	var responseBody Response
+
+	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return nil, fmt.Errorf("could not decode response: %w", err)
+	}
+
+	// Return the parsed response.
+	return &responseBody, nil
 }
