@@ -15,33 +15,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Request holds the model name and a list of user messages for the OpenAI endpoint.
-type Request struct {
-	Model    string    `json:"model,omitempty"`
-	Messages []Message `json:"messages,omitempty"`
-}
-
-// Message represents a conversation message with a role and its text content.
-type Message struct {
-	Role    string `json:"role,omitempty"`
-	Content string `json:"content,omitempty"`
-}
-
-// Response is what we get from the OpenAI API: a list of possible reply choices.
-type Response struct {
-	Choices []Choice `json:"choices,omitempty"`
-}
-
-// Choice contains the actual text returned by the OpenAI model in the Message field.
-type Choice struct {
-	Message Content `json:"message,omitempty"`
-}
-
-// Content represents the text output from the OpenAI model.
-type Content struct {
-	Content string `json:"content,omitempty"`
-}
-
 func main() {
 	// Load environment variables from .env. If we can't, it's a fatal error.
 	if err := godotenv.Load(); err != nil {
@@ -150,12 +123,14 @@ func sendOpenAIRequest(client *http.Client, apiKey string, payload Request) (*Re
 	if resp.StatusCode != http.StatusOK {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
+
 		return nil, fmt.Errorf("non-OK status: %s\nBody: %s",
 			resp.Status, buf.String())
 	}
 
 	// Decode the response into a Response struct.
 	var responseBody Response
+
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
 		return nil, fmt.Errorf("could not decode response: %w", err)
 	}
