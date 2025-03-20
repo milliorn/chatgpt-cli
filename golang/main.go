@@ -35,7 +35,7 @@ func main() {
 	// Prompt for user input until they type "exit".
 	for {
 		fmt.Print("\nEnter your prompt (or 'exit' to quit): ")
-		
+
 		prompt, err := reader.ReadString('\n')
 
 		if err != nil {
