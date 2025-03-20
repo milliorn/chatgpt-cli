@@ -3,12 +3,14 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	// Loads environment variables from a .env file if present.
 	"github.com/joho/godotenv"
@@ -123,58 +125,58 @@ func main() {
 }
 
 /*
-sendOpenAIRequest handles converting a Request to JSON, sending a POST to OpenAI,
-checking the response status code, and then decoding the response into a Go struct.
+sendOpenAIRequest handles:
+- Converting a Request to JSON,
+- Creating a context with a 10s timeout,
+- Making a POST to OpenAI using http.NewRequestWithContext,
+- Checking the response status code,
+- Decoding the response into a Go struct.
 */
 func sendOpenAIRequest(client *http.Client, apiKey string, payload Request) (*Response, error) {
-	// Convert our payload (Request struct) to JSON so it can be sent in the request body.
+	// Convert payload to JSON
 	reqBody, err := json.Marshal(payload)
-
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal request: %w", err)
 	}
 
-	// Create a new HTTP POST request with the JSON payload.
-	req, err := http.NewRequest(
+	// Create a context that will auto-cancel after 10 seconds
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Build the HTTP request with context
+	req, err := http.NewRequestWithContext(
+		ctx,
 		http.MethodPost,
 		"https://api.openai.com/v1/chat/completions",
 		bytes.NewBuffer(reqBody),
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
 
-	// Set the headers to indicate we're sending JSON and include our API key for authorization.
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
-	// Execute the request using the provided HTTP client.
+	// Execute the request
 	resp, err := client.Do(req)
-
 	if err != nil {
+		// If the error is because of the context timing out or being canceled,
+		// err may be `context.DeadlineExceeded` or `context.Canceled`
 		return nil, fmt.Errorf("could not send request: %w", err)
 	}
-
-	// Always close the response body to free up resources.
 	defer resp.Body.Close()
 
-	// If the response status is not 200 OK, read the body for a more detailed error message.
 	if resp.StatusCode != http.StatusOK {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
-
 		return nil, fmt.Errorf("non-OK HTTP status: %s\nResponse body: %s",
 			resp.Status, buf.String())
 	}
 
-	// Decode the response JSON into our Response struct.
 	var responseBody Response
-
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
 		return nil, fmt.Errorf("could not decode response: %w", err)
 	}
 
-	// Return the successfully parsed response.
 	return &responseBody, nil
 }
