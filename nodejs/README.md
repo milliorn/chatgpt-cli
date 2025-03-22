@@ -27,9 +27,9 @@ The chatbot will generate a prompt for you to respond to, and it will continue t
 
 ## Configuration
 
-Before you can use the `chatgpt-cli` tool, you'll need to set up an OpenAI API key. 
+Before you can use the `chatgpt-cli` tool, you'll need to set up an OpenAI API key.
 To do this, create an account on the OpenAI website and follow the instructions for obtaining an API key.
-Then, you need to create an `.env` file in project root, an add your organization and key there. 
+Then, you need to create an `.env` file in project root, an add your organization and key there.
 
 `API_KEY=yourkey`
 
@@ -42,4 +42,3 @@ This project was built using the [dotenv](https://www.npmjs.com/package/dotenv) 
 Feel free to contribute to the project by opening issues or submitting pull requests.
 
 Happy chatting with ChatGPT! 🚀
-
